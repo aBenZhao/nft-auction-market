@@ -1,0 +1,6 @@
+{
+  "tabWidth": 2,       // 缩进为 2 个空格
+  "semi": true,        // 语句结尾加分号
+  "singleQuote": false, // 使用双引号而非单引号
+  "printWidth": 120    // 每行最大字符数（超过自动换行）
+}

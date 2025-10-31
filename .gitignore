@@ -1,0 +1,24 @@
+# 依赖目录（无需提交，可通过 npm install 重新安装）
+node_modules
+# 环境变量文件（含私钥、API Key，绝对不能提交）
+.env
+
+# 编译产物（合约 ABI、字节码，可通过编译重新生成）
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# 日志和系统临时文件
+*.log
+.DS_Store
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337
+
