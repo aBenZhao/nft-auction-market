@@ -7,7 +7,7 @@ require("dotenv").config(); // 加载 .env 文件中的环境变量
 module.exports = {
   // Solidity 编译器配置
   solidity: {
-    version: "0.8.28", // 与合约的 pragma 版本一致（必须匹配，否则编译报错）
+    version: "0.8.20", // 与合约的 pragma 版本一致（必须匹配，否则编译报错）
     settings: {
       optimizer: {
         enabled: true, // 启用编译器优化（部署时减少 gas 消耗）
