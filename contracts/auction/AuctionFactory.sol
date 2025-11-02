@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IAuctionFactory.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "../interfaces/IAuction.sol";
 
 
 contract AuctionFactory is Ownable , IAuctionFactory {
@@ -133,14 +134,14 @@ contract AuctionFactory is Ownable , IAuctionFactory {
             startPrce,
             block.timestamp,
             block.timestamp + duration,
-            acceptedPaymentTokenAddress,
+            acceptedPaymentTokenAddress
         );
         
         // 调用拍卖合约的updateFeeParameters方法，更新手续费参数
         IAuction(auctionProxyAddress).updateFeeParameters(
             baseFeePercentage,
             feeThreshold
-        )
+        );
 
         // 触发拍卖创建事件
         emit AuctionCreated(auctionId, auctionProxyAddress, msg.sender);
@@ -178,13 +179,13 @@ contract AuctionFactory is Ownable , IAuctionFactory {
     /**
      * 设置动态手续费参数；（通常限制为管理员调用）
      * @dev 用于调整拍卖成交时的手续费计算规则（如基础费率和阶梯费率阈值）
-     * @param baseFee 基础手续费比例（通常以点数表示，如100代表1%，需结合合约内精度处理）
-     * @param feeThreshold 阶梯费率阈值（如超过某金额后手续费率变化，单位：对应代币最小单位）
+     * @param _baseFee 基础手续费比例（通常以点数表示，如100代表1%，需结合合约内精度处理）
+     * @param _feeThreshold 阶梯费率阈值（如超过某金额后手续费率变化，单位：对应代币最小单位）
      */
-    function setDynamicFeeParameters(uint256 baseFee,uint256 feeThreshold) external override {
+    function setDynamicFeeParameters(uint256 _baseFee,uint256 _feeThreshold) external override {
         require(msg.sender == owner(), "Only owner can set fee parameters");
-        baseFeePercentage = baseFee;
-        feeThreshold = feeThreshold;
+        baseFeePercentage = _baseFee;
+        feeThreshold = _feeThreshold;
         // 触发动态手续费参数更新事件
         emit DynamicFeeParametersUpdated(baseFeePercentage, feeThreshold);
     }
