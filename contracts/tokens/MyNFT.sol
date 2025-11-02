@@ -64,7 +64,7 @@ contract MyNFT is ERC721, Ownable {
     /**
      * 构造函数 - 初始化 ERC721 代币名称和符号
      */
-    constructor() ERC721(NAME,SYMBOL) Ownable(msg.sender) {}
+    constructor() ERC721(NAME,SYMBOL) {}
 
     
 // =================================================== 外部函数 ：供外部调用 ===================================================
@@ -115,14 +115,6 @@ contract MyNFT is ERC721, Ownable {
     }
 
 
-    /**
-     * 检查 NFT 是否存在
-     * @param tokenId NFT ID
-     * @return bool 如果 NFT 存在则返回 true，否则返回 false
-     */
-    function _exists(uint256 tokenId) internal view returns (bool) {
-        // NFT 必须存在, 即已经赋予给某个接受者，且拥有者地址不为零地址,否则返回 false
-        return _ownerOf(tokenId) != address(0);
-    }
+
 
 }
