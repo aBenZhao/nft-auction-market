@@ -11,6 +11,8 @@ interface IAuctionFactory {
 // 事件声明：
     // 1、拍卖创建事件 ==> 当工厂成功创建新拍卖合约时触发
     // 2、升级合约事件 ==> 当工厂升级拍卖合约的实现逻辑时触发
+    // 3、代币预言机更新事件 ==> 当管理员新增或更新代币的价格源时触发
+    // 4、动态手续费参数更新事件 ==> 当管理员更新动态手续费参数时触发
 
 // 函数声明：
     // 1、拍卖创建的函数声明 ==> 由卖家调用，通过工厂生成独立的拍卖合约
@@ -28,12 +30,29 @@ interface IAuctionFactory {
      */
     event AuctionCreated(uint256 indexed auctionId, address indexed auctionAddress, address indexed seller);
 
+
     /**
      * 升级合约事件；
      * @dev 当工厂升级拍卖合约的实现逻辑时触发
      * @param newImplementationAddress 新的拍卖合约实现逻辑地址； （索引参数，支持按合约地址过滤）
      */
     event AuctionImplementationUpgraded(address indexed newImplementationAddress);
+
+    /**
+     * 代币预言机更新事件；
+     * @dev 当管理员新增或更新代币的价格源时触发；
+     * @param tokenAddress 代币地址；
+     * @param priceFeedAddress 价格预言机地址；
+     */
+    event TokenPriceFeedSet(address indexed tokenAddress, address priceFeedAddress);
+
+    /**
+     * 动态手续费参数更新事件; （通常限制为管理员调用）
+     * @dev 当管理员更新动态手续费参数时触发；
+     * @param baseFee 基础手续费比例（通常以点数表示，如100代表1%，需结合合约内精度处理）
+     * @param feeThreshold 阶梯费率阈值（如超过某金额后手续费率变化，单位：对应代币最小单位）
+     */
+    event DynamicFeeParametersUpdated(uint256 baseFee, uint256 feeThreshold);
 
 // =================================================== 函数声明： ：合约核心逻辑 ===================================================
     /**

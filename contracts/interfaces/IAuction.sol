@@ -32,6 +32,7 @@ interface IAuction {
     // 4、结束拍卖 ==> 结束拍卖，确定赢家
     // 5、获取拍卖详情 ==> 获取特定拍卖的详细信息
     // 6、获取出价折合美元价值 ==> 获取当前最高出价折合的美元价值
+    // 7、修改
 
 // =================================================== 状态变量 ：存储合约状态 ====================================================
     // 出价单结构体
@@ -183,5 +184,13 @@ interface IAuction {
      * @return 以美元计价的当前最高出价金额；
      */
     function getCurrentBidInUSD(uint256 auctionId) external view returns (uint256);
+
+
+    /**
+     * @notice 更新手续费参数（仅管理员可调用）
+     * @param newBaseFee 新的基础手续费比例（点数，100 = 1%）
+     * @param newThreshold 新的手续费阈值（单位：对应代币最小单位）
+     */
+    function updateFeeParameters(uint256 newBaseFee, uint256 newThreshold) external;
 
 }
