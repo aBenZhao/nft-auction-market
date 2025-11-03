@@ -7,7 +7,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
  * @dev 一个库合约，用于通过Chainlink预言机实现代币与美元之间的价格转换
  * 库合约特点：无状态（不存储数据），仅包含工具函数，需嵌入其他合约使用
  */
-library PriveConverter {
+library PriceConverter {
 // =================================================== 开发前：READNE准备工作 ===================================================
 // 函数声明：
     // 1、从价格预言机获取最新价格
