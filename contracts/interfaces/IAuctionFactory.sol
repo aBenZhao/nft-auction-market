@@ -19,6 +19,7 @@ interface IAuctionFactory {
     // 2、查询拍卖合约的地址的函数声明 ==> 根据拍卖ID获取对应的拍卖合约地址
     // 3、升级拍卖合约实现逻辑的函数声明 ==> 限制工厂管理员调用 ==> 用于更新拍卖合约的核心逻辑（如修复漏洞或添加新功能），通常配合代理模式实现
     // 4、设置动态手续费参数的函数声明 ==> 限制工厂管理员调用 ==> 用于调整拍卖成交时的手续费计算规则（如基础费率和阶梯费率阈值）
+    // 5、查询单个代币的预言机地址
 
 // =================================================== 事件声明 ：记录合约状态变更 =================================================
     /**
@@ -95,5 +96,8 @@ interface IAuctionFactory {
      * @param feeThreshold 阶梯费率阈值（如超过某金额后手续费率变化，单位：对应代币最小单位）
      */
     function setDynamicFeeParameters(uint256 baseFee,uint256 feeThreshold) external;
+
+    // 新增：查询单个代币的预言机地址
+    function getTokenFeed(address token) external view returns (address);
 
 }

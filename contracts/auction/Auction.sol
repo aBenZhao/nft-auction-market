@@ -5,9 +5,11 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol"; 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./AuctionFactory.sol";
 import "../interfaces/IAuction.sol";
 import "../oracles/PriceConverter.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , ReentrancyGuard ,IAuction {
 
@@ -31,6 +33,8 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
     // 4、动态手续费阈值（超过该金额时手续费减半，单位：对应代币最小单位）
     // 5、拍卖计数器 ==> 记录已创建的拍卖总数
     // 6、平台收益地址 ==> 平台收取手续费的地址
+    // 7、缓存代币预言机映射 ==> 存储代币预言机地址
+    // 8、存储工厂地址
 
 // 可升级逻辑函数的initialize函数：
     // 1、初始化OwnableUpgradeable（设置部署者为初始所有者）
@@ -87,12 +91,19 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
 
     /// @notice 平台收益地址 ==> 平台收取手续费的地址
     address public platformFeeAddress;
+
+    /// @notice 存储工厂地址
+    address public auctionFactory;
+
+
+    // 缓存代币预言机映射
+    mapping(address => address) public tokenPriceFeeds;
 // ================================================== 可升级逻辑函数的initialize函数 ===================================================
     /**
      * @notice 可升级合约的初始化函数（替代构造函数，仅执行一次）
      * @param _platformFeeAddress 平台收益地址（初始化时指定，后续可通过管理员修改）
      */
-    function initialize(address _platformFeeAddress) public initializer {
+    function initialize(address _platformFeeAddress,address _auctionFactory) public initializer {
         // 初始化OwnableUpgradeable（设置部署者为初始所有者）
         __Ownable_init();
         // 初始化UUPSUpgradeable（启用升级功能）
@@ -105,6 +116,8 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
         baseFeePercentage = 250; 
         // 初始化动态手续费阈值（初始手续费阈值：1万ETH（测试网场景，主网需调整））
         feeThreshold = 10000 ether; 
+        // 存储工厂地址
+        auctionFactory = _auctionFactory; 
     }
 
 
@@ -263,7 +276,53 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param erc20Address  ERC20代币地址（ETH出价时为空地址）；
      */
     function _placeBid(uint256 auctionId, uint256 amount, bool isETH, address erc20Address) internal {
+        // 引用拍卖信息（storage修饰符：直接操作原数据，避免拷贝）
+        AuctionInfo storage auction = auctions[auctionId];
 
+        require(auction.status == AuctionStatus.ACTIVE, "Auction is not active");
+        require(block.timestamp >= auction.startTime, "Auction has not started");
+        require(block.timestamp <= auction.endTime, "Auction has ended");
+        require(amount > auction.startPrice, "Bid below start price");
+        require(amount > auction.highestBid, "Bid below current highest bid");
+
+        uint8 decimals = isETH ? 18 : ERC20(erc20Address).decimals();
+        PriceConverter.convertToUSD(amount,decimals,_getTokenFeed(erc20Address));
+
+        // 记录本次出价到历史列表
+        auction.bidHistory.push(
+            Bid(
+                msg.sender, // bidder
+                amount,     // amount
+                block.timestamp, // timestamp
+                !isETH,     // isERC20
+                erc20Address // tokenAddress
+            )
+        );
+
+        // 触发BidPlaced事件（来自IAuction接口），记录出价信息
+        emit BidPlaced(auctionId, msg.sender, amount,!isETH, erc20Address);
+    }
+
+
+    /**
+     * @dev 内部函数：获取代币的预言机地址（优先本地缓存，缺失则从工厂同步）
+     * @param token 目标代币地址（address(0)代表ETH）
+     * @return 预言机地址（若工厂也无配置则revert）
+     */
+    function _getTokenFeed(address token) internal returns (address) {
+        address feed = tokenPriceFeeds[token];
+        // 本地缓存存在，直接返回
+        if (feed != address(0)) {
+            return feed;
+        }
+
+        // 本地缓存缺失，从工厂查询并更新缓存
+        feed = IAuctionFactory(auctionFactory).getTokenFeed(token);
+        require(feed != address(0), "Factory has no feed for token");
+        
+        // 更新本地缓存，供下次使用
+        tokenPriceFeeds[token] = feed;
+        return feed;
     }
 
 // =================================================== 函数实现： ：合约升级相关 ===================================================

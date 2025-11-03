@@ -117,8 +117,9 @@ contract AuctionFactory is Ownable , IAuctionFactory {
         ERC1967Proxy proxy = new ERC1967Proxy(
             auctionImplementation,
             abi.encodeWithSignature(
-                "initialize(address)",
-                owner()
+                "initialize(address,address)",
+                owner(),
+                address(this)
             )
         );
 
@@ -189,5 +190,14 @@ contract AuctionFactory is Ownable , IAuctionFactory {
         // 触发动态手续费参数更新事件
         emit DynamicFeeParametersUpdated(baseFeePercentage, feeThreshold);
     }
+
+    /**
+     * 根据代币地址查询对应的价格预言机地址；
+     * @param token 代币地址；
+     */
+    function getTokenFeed(address token) external override view returns (address){
+        return tokenPriceFeeds[token];
+    }
+
 
 }
