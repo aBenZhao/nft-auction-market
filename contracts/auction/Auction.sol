@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./AuctionFactory.sol";
 import "../interfaces/IAuction.sol";
 import "../oracles/PriceConverter.sol";
@@ -121,7 +122,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
     }
 
 
-// =================================================== 函数实现： ：拍卖核心逻辑 ===================================================
+// =================================================== 外部函数实现： ：拍卖核心逻辑 ===================================================
     /**
      * 创建拍卖；
      * @param auctionId 拍卖ID；（需由调用者确保唯一性）
@@ -140,7 +141,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
         uint256 startTime,          // 拍卖开始时间戳
         uint256 endTime,            // 拍卖结束时间戳
         address paymentTokenAddress
-    ) external{
+    ) external override{
         require(auctionId > 0, "Invalid auction ID");
         require(nftAddress != address(0), "Invalid NFT address");
         require(tokenId > 0, "Invalid token ID");
@@ -182,7 +183,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param auctionId 拍卖ID；
      * payable修饰符：允许函数接收ETH
      */
-    function bid(uint256 auctionId) external payable{
+    function bid(uint256 auctionId) external override payable nonReentrant{
         require(auctionId > 0, "Invalid auction ID");
         require(auctions[auctionId].paymentTokenAddress == address(0), "Must use ERC20");
         // 调用内部出价逻辑：ETH出价标记为isETH=true，ERC20地址为空
@@ -196,7 +197,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param auctionId 拍卖ID；
      * @param amount 出价金额；
      */
-    function bidWithERC20(uint256 auctionId, uint256 amount) external{
+    function bidWithERC20(uint256 auctionId, uint256 amount) external override nonReentrant{
         require(auctionId > 0, "Invalid auction ID");
         require(auctions[auctionId].paymentTokenAddress != address(0), "Must use ETH");
 
@@ -213,8 +214,55 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * 通常由卖家或合约自动调用
      * @param auctionId 拍卖ID；
      */
-    function endAuction(uint256 auctionId) external{
+    function endAuction(uint256 auctionId) external override nonReentrant{
+        AuctionInfo storage auction = auctions[auctionId];
 
+
+        // 校验：拍卖状态必须为"进行中"
+        require(auction.status == AuctionStatus.ACTIVE, "Auction is not active");
+
+        // 校验：满足结束条件（时间已过期 或 卖家主动结束）
+        require(block.timestamp >= auction.endTime || msg.sender == auction.seller, "Auction has not ended");
+
+        // 更新拍卖状态为"已结束"
+        auction.status = AuctionStatus.ENDED;
+
+        if (auction.highestBidder != address(0)) {
+            // 计算动态手续费（根据成交金额是否超阈值调整）
+            uint256 fee = calculateDynamicFee(auctionId);
+
+            // 卖家实际到手金额 = 最高出价 - 手续费
+            uint256 sellerAmount = auction.highestBid - fee;
+
+            // 根据支付类型，将资金分别转移给卖家和平台
+            if(auction.paymentTokenAddress == address(0)){
+                // ETH支付：直接转移给卖家
+                payable(auction.seller).transfer(sellerAmount);
+                // 平台手续费 = 手续费
+                payable(platformFeeAddress).transfer(fee);
+            }else{
+                // ERC20支付：调用代币合约的transfer函数转移给卖家
+                IERC20(auction.paymentTokenAddress).transfer(auction.seller,sellerAmount);
+                // 平台手续费 = 手续费
+                IERC20(auction.paymentTokenAddress).transfer(platformFeeAddress,fee);
+            }
+
+            // 将NFT转移给最高出价者（获胜者）
+            IERC721(auction.nftAddress).transferFrom(
+                address(this),              // 转出地址：拍卖合约
+                auction.highestBidder,      // 转入地址：最高出价者
+                auction.tokenId);
+
+        }else{
+                        // 无最高出价者（拍卖流拍），将NFT退回给卖家
+            IERC721(auction.nftAddress).transferFrom(
+                address(this),
+                auction.seller,
+                auction.tokenId
+            );
+        }
+        
+        emit AuctionEnded(auctionId, auction.highestBidder, auction.highestBid, auction.paymentTokenAddress);
     }
 
 
@@ -232,7 +280,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @return highestBid 最高出价金额；（单位：wei或代币最小单位） 
      * @return highestBidder 最高出价人地址；
      */
-    function getAuctionDetails(uint256 auctionId) external view returns (
+    function getAuctionDetails(uint256 auctionId) external view override returns (
         address nftAddress,             // NFT合约地址
         uint256 tokenId,                // NFT代币ID
         address seller,                 // 拍卖者地址 
@@ -244,6 +292,20 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
         uint256 highestBid,             // 最高出价金额 （单位：wei或代币最小单位） 
         address highestBidder           // 最高出价人地址
     ){
+        require(auctionId > 0, "Invalid auction ID");
+        AuctionInfo storage auction = auctions[auctionId];
+        return (
+            auction.nftAddress,
+            auction.tokenId,
+            auction.seller,
+            auction.startPrice,
+            auction.startTime,
+            auction.endTime,
+            auction.paymentTokenAddress,
+            auction.status,
+            auction.highestBid,
+            auction.highestBidder
+        );
 
     }
 
@@ -253,7 +315,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param auctionId 拍卖ID； 
      * @return 以美元计价的当前最高出价金额；
      */
-    function getCurrentBidInUSD(uint256 auctionId) external view returns (uint256){
+    function getCurrentBidInUSD(uint256 auctionId) external view override returns (uint256){
 
     }
 
@@ -263,11 +325,11 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param newBaseFee 新的基础手续费比例（点数，100 = 1%）
      * @param newThreshold 新的手续费阈值（单位：对应代币最小单位）
      */
-    function updateFeeParameters(uint256 newBaseFee, uint256 newThreshold) external{
+    function updateFeeParameters(uint256 newBaseFee, uint256 newThreshold) external override onlyOwner{
 
     }
 
-// =================================================== 内部函数实现： ：核心逻辑相关 ===================================================
+// =================================================== 内部函数实现： 内部核心逻辑相关 ===================================================
     /**
      * 内部出价逻辑函数；ETH和ERC20代币出价均调用此函数；
      * @param auctionId     拍卖ID；
@@ -286,7 +348,25 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
         require(amount > auction.highestBid, "Bid below current highest bid");
 
         uint8 decimals = isETH ? 18 : ERC20(erc20Address).decimals();
-        PriceConverter.convertToUSD(amount,decimals,_getTokenFeed(erc20Address));
+        // 计算出价金额折合的美元价值
+        uint256 amountInUSD = PriceConverter.convertToUSD(amount,decimals,_getTokenFeed(isETH ? address(0) : erc20Address));
+
+        // 计算出最高出价金额折合的美元价值
+        uint256 highestBidUSD = auction.highestBid > 0 ? 
+            (PriceConverter.convertToUSD(auction.highestBid,decimals,_getTokenFeed(isETH ? address(0) : erc20Address)))
+            : 0;
+
+        // 出价金额需大于当前最高出价金额
+        require(amountInUSD > highestBidUSD, "Bid below current highest bid in USD");
+            
+        // 退还前一个最高价
+        if(auction.highestBidder != address(0) ){
+            _refundPreviousBidder(auction);
+        }
+
+        // 更新此拍卖单出价信息
+        auction.highestBid = amount;
+        auction.highestBidder = msg.sender;
 
         // 记录本次出价到历史列表
         auction.bidHistory.push(
@@ -303,6 +383,59 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
         emit BidPlaced(auctionId, msg.sender, amount,!isETH, erc20Address);
     }
 
+
+    function _refundPreviousBidder(AuctionInfo storage auction) internal {
+        Bid storage lastAuctionBid = auction.bidHistory[auction.bidHistory.length - 1];
+        address bidder = lastAuctionBid.bidder;
+        uint256 amount = lastAuctionBid.amount;
+        address erc20Address = lastAuctionBid.erc20Address;
+
+        // 根据出价类型（ERC20/ETH）执行退款
+        if(lastAuctionBid.isERC20){
+            // ERC20代币出价，需要调用代币合约的transfer函数，将代币退回给前一个最高价出价人
+            ERC20(erc20Address).transfer(bidder, amount);
+        } else {
+            // ETH出价，直接调用transfer函数，将ETH退回给前一个最高价出价人
+            payable(bidder).transfer(amount);
+        }
+    }
+
+    /**
+     * @notice 计算动态手续费（公开可见，支持外部查询）
+     * @param auctionId 目标拍卖的唯一ID
+     * @return 最终手续费金额（单位：对应支付代币最小单位）
+     */
+    function calculateDynamicFee(uint256 auctionId) internal returns (uint256){
+        AuctionInfo storage auction = auctions[auctionId];
+
+        // 无最高出价者（流拍），手续费为0
+        if (auction.highestBidder == address(0)){
+            return 0;
+        }
+
+        // 计算基础手续费：（最高出价 * 基础手续费比例） / 10000（点数换算）
+        uint256 fee = auction.highestBid * baseFeePercentage / 10000;
+        
+        // 计算最高出价的美元价值（用于判断是否超阈值）
+        uint8 decimals = auction.paymentTokenAddress == address(0) ? 18 : ERC20(auction.paymentTokenAddress).decimals();
+        // 计算出价金额折合的美元价值
+        uint256 amountInUSD = PriceConverter.convertToUSD(
+            auction.highestBid,
+            decimals,
+            _getTokenFeed(auction.paymentTokenAddress == address(0) ? address(0) : auction.paymentTokenAddress));
+
+        // 若美元价值超过阈值，手续费减半（动态调整逻辑）
+        if (amountInUSD > feeThreshold){
+            return fee / 2;
+        }
+
+        // 未超阈值，返回基础手续费
+        return fee;
+    }
+
+
+
+// =================================================== 内部函数实现： 内部工具函数操作 ===================================================
 
     /**
      * @dev 内部函数：获取代币的预言机地址（优先本地缓存，缺失则从工厂同步）

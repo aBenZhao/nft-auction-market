@@ -98,7 +98,7 @@ interface IAuction {
      */
     event AuctionEnded(
         uint256 indexed auctionId,          // 拍卖ID
-        address indexed winnerAddress,             // 赢家地址
+        address indexed winnerAddress,      // 赢家地址
         uint256 winningBidAmount,           // 赢家最终出价金额
         address paymentTokenAddress         // 支付代币地址（address(0)表示ETH）    
     );
