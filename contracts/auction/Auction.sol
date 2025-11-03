@@ -315,8 +315,18 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param auctionId 拍卖ID； 
      * @return 以美元计价的当前最高出价金额；
      */
-    function getCurrentBidInUSD(uint256 auctionId) external view override returns (uint256){
+    function getCurrentBidInUSD(uint256 auctionId) external override returns (uint256){
+        AuctionInfo storage auction = auctions[auctionId];
+        // 无最高出价时，美元价值为0
+        if (auction.highestBid == 0) return 0;
 
+        // 计算并返回最高出价的美元价值
+        uint8 decimals = auction.paymentTokenAddress == address(0) ? 18 : ERC20(auction.paymentTokenAddress).decimals();
+        return PriceConverter.convertToUSD(
+            auction.highestBid,
+            decimals,
+            _getTokenFeed(auction.paymentTokenAddress == address(0) ? address(0) : auction.paymentTokenAddress)
+        );
     }
 
 
@@ -326,7 +336,8 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param newThreshold 新的手续费阈值（单位：对应代币最小单位）
      */
     function updateFeeParameters(uint256 newBaseFee, uint256 newThreshold) external override onlyOwner{
-
+        baseFeePercentage = newBaseFee;  // 更新基础手续费
+        feeThreshold = newThreshold;    // 更新阈值
     }
 
 // =================================================== 内部函数实现： 内部核心逻辑相关 ===================================================

@@ -183,7 +183,7 @@ interface IAuction {
      * @param auctionId 拍卖ID； 
      * @return 以美元计价的当前最高出价金额；
      */
-    function getCurrentBidInUSD(uint256 auctionId) external view returns (uint256);
+    function getCurrentBidInUSD(uint256 auctionId) external returns (uint256);
 
 
     /**
