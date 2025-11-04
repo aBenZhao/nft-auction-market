@@ -211,7 +211,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
 
     /**
      * 结束拍卖
-     * 通常由卖家或合约自动调用
+     * 通常由卖家主动调用，或时间到期等待调用；
      * @param auctionId 拍卖ID；
      */
     function endAuction(uint256 auctionId) external override nonReentrant{
@@ -254,7 +254,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
                 auction.tokenId);
 
         }else{
-                        // 无最高出价者（拍卖流拍），将NFT退回给卖家
+            // 无最高出价者（拍卖流拍），将NFT退回给卖家
             IERC721(auction.nftAddress).transferFrom(
                 address(this),
                 auction.seller,
@@ -416,7 +416,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param auctionId 目标拍卖的唯一ID
      * @return 最终手续费金额（单位：对应支付代币最小单位）
      */
-    function calculateDynamicFee(uint256 auctionId) internal returns (uint256){
+    function calculateDynamicFee(uint256 auctionId) public returns (uint256){
         AuctionInfo storage auction = auctions[auctionId];
 
         // 无最高出价者（流拍），手续费为0
@@ -435,8 +435,14 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
             decimals,
             _getTokenFeed(auction.paymentTokenAddress == address(0) ? address(0) : auction.paymentTokenAddress));
 
+        uint256 feeThresholdInUSD  =  PriceConverter.convertToUSD(
+            feeThreshold,
+            18,
+            _getTokenFeed(address(0)));
+        
+
         // 若美元价值超过阈值，手续费减半（动态调整逻辑）
-        if (amountInUSD > feeThreshold){
+        if (amountInUSD > feeThresholdInUSD){
             return fee / 2;
         }
 

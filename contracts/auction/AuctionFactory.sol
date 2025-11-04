@@ -46,7 +46,7 @@ contract AuctionFactory is Ownable , IAuctionFactory {
     // 拍卖ID计数器
     uint256 private auctionIdCounter;
 
-    // 拍卖合约映射 ==> 拍卖ID => 拍卖合约地址
+    // 拍卖合约映射 ==> 拍卖ID => 拍卖合约地址（实则代理合约地址）
     mapping(uint256 => address) public auctions;
 
     // 基础手续费比例（单位：基础点数，100 = 1%，如250 = 2.5%）
@@ -123,7 +123,7 @@ contract AuctionFactory is Ownable , IAuctionFactory {
             )
         );
 
-        // 存储拍卖合约地址
+        // 存储拍卖代理合约地址
         address auctionProxyAddress = address(proxy);
         auctions[auctionId] = auctionProxyAddress;
 
