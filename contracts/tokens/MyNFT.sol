@@ -54,9 +54,9 @@ contract MyNFT is ERC721, Ownable {
      * desc：当新NFT被成功铸造时触发
      * @param to 接收NFT的地址（索引参数，支持按接收者过滤事件）
      * @param tokenId 新铸造的NFT唯一ID（索引参数，支持按ID过滤事件）
-     * @param tokenURI NFT 的元数据 URI
+     * @param tokenUri NFT 的元数据 URI
      */
-    event NFTMinted(address indexed to, uint256 indexed tokenId, string tokenURI);
+    event NFTMinted(address indexed to, uint256 indexed tokenId, string tokenUri);
 
 
 // =================================================== 构造函数 ：初始化合约状态 ===================================================
@@ -72,14 +72,14 @@ contract MyNFT is ERC721, Ownable {
     /**
      * 铸造 NFT
      * @param to 铸造 NFT 的地址
-     * @param tokenURI NFT 的元数据 URI
+     * @param tokenUri NFT 的元数据 URI
      * @return tokenId 铸造的 NFT 编号
      */
-    function mint(address to,string memory tokenURI) external returns (uint256){
+    function mint(address to,string memory tokenUri) external returns (uint256){
         // 接收地址不能为空
         require(to != address(0), "Invalid address");
-        // tokenURI 不能为空
-        require(bytes(tokenURI).length > 0, "Token URI cannot be empty");
+        // tokenUri 不能为空
+        require(bytes(tokenUri).length > 0, "Token URI cannot be empty");
         // tokenId 不得溢出
         require(_tokenIdCounter < type(uint256).max, "Token ID overflow");
 
@@ -90,9 +90,9 @@ contract MyNFT is ERC721, Ownable {
         // 铸造 NFT
         _mint(to, tokenId);
         // 设置 NFT 的元数据 URI
-        _setTokenURI(tokenId, tokenURI);
+        _setTokenURI(tokenId, tokenUri);
         // 触发 NFT 铸造事件
-        emit NFTMinted(to, tokenId, tokenURI);
+        emit NFTMinted(to, tokenId, tokenUri);
         // 返回铸造的 NFT ID
         return tokenId;
 
@@ -105,15 +105,19 @@ contract MyNFT is ERC721, Ownable {
      * 设置 NFT 的元数据 URI
      * @dev 仅限内部调用   
      * @param tokenId       NFT ID
-     * @param tokenURI       NFT 的元数据 URI
+     * @param tokenUri       NFT 的元数据 URI
      */
-    function _setTokenURI(uint256 tokenId, string memory tokenURI) internal {
+    function _setTokenURI(uint256 tokenId, string memory tokenUri) internal {
         // NFT 必须存在
         require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
         // 设置 NFT 的元数据 URI
-        _tokenURIs[tokenId] = tokenURI;
+        _tokenURIs[tokenId] = tokenUri;
     }
 
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {   
+        require (_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        return _tokenURIs[tokenId];
+    }
 
 
 

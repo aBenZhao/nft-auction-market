@@ -4,7 +4,9 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IAuctionFactory.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "../interfaces/IAuction.sol";
+
 
 
 contract AuctionFactory is Ownable , IAuctionFactory {
@@ -127,6 +129,9 @@ contract AuctionFactory is Ownable , IAuctionFactory {
         address auctionProxyAddress = address(proxy);
         auctions[auctionId] = auctionProxyAddress;
 
+        IERC721(nftAddress).approve(auctionProxyAddress,tokenId);
+
+
         // 调用拍卖合约的createAuction方法
         IAuction(auctionProxyAddress).createAuction(
             auctionId,
@@ -135,7 +140,8 @@ contract AuctionFactory is Ownable , IAuctionFactory {
             startPrce,
             block.timestamp,
             block.timestamp + duration,
-            acceptedPaymentTokenAddress
+            acceptedPaymentTokenAddress,
+            msg.sender
         );
         
         // 调用拍卖合约的updateFeeParameters方法，更新手续费参数

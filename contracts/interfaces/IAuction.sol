@@ -121,7 +121,8 @@ interface IAuction {
         uint256 startPrice,         // 起拍价
         uint256 startTime,          // 拍卖开始时间戳
         uint256 endTime,            // 拍卖结束时间戳
-        address paymentTokenAddress
+        address paymentTokenAddress,
+        address from
     ) external;
 
 

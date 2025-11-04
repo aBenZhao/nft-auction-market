@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./AuctionFactory.sol";
 import "../interfaces/IAuction.sol";
 import "../oracles/PriceConverter.sol";
@@ -140,34 +141,42 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
         uint256 startPrice,         // 起拍价
         uint256 startTime,          // 拍卖开始时间戳
         uint256 endTime,            // 拍卖结束时间戳
-        address paymentTokenAddress
+        address paymentTokenAddress,
+        address from
     ) external override{
-        require(auctionId > 0, "Invalid auction ID");
-        require(nftAddress != address(0), "Invalid NFT address");
-        require(tokenId > 0, "Invalid token ID");
+        require(auctions[auctionId].seller == address(0), "Auction ID already exists");
+        require(endTime > startTime, "Invalid auction duration");
         require(startPrice > 0, "Invalid start price");
-        require(startTime > block.timestamp, "Invalid start time");
-        require(endTime > startTime, "Invalid end time");
 
-        // 确保拍卖ID唯一
-        require(auctions[auctionId].seller == address(0), "Auction ID already");
-        // 确保支付代币地址有效
-        require(paymentTokenAddress != address(0), "Invalid payment token address");
+        // 将卖家的NFT转移到拍卖合约（需卖家提前授权合约转移该NFT）
+        IERC721(nftAddress).transferFrom(from, address(this), tokenId);
 
         // 创建拍卖信息结构体对象
-        auctions[auctionId] = AuctionInfo({
-            nftAddress: nftAddress,                     // 待拍卖NFT的合约地址
-            tokenId: tokenId,                           // 待拍卖NFT的代币ID
-            seller: msg.sender,                         // 拍卖者地址 (卖家为函数调用者)  
-            startPrice: startPrice,                     // 起拍价（单位：对应支付代币最小单位）  
-            startTime: startTime,                       // 拍卖开始时间戳
-            endTime: endTime,                           // 拍卖结束时间戳   
-            paymentTokenAddress: paymentTokenAddress,   // 支付代币地址（address(0)表示ETH）
-            status: AuctionStatus.ACTIVE,               // 初始状态为"进行中"
-            highestBid: 0,                              // 初始最高出价为0
-            highestBidder: address(0),                  // 初始最高出价者为空地址
-            bidHistory: new Bid[](0)                    // 初始化空出价历史
-        });
+        AuctionInfo storage auctionInfo = auctions[auctionId];
+        auctionInfo.nftAddress = nftAddress;
+        auctionInfo.tokenId = tokenId;
+        auctionInfo.seller = msg.sender;
+        auctionInfo.startPrice = startPrice;
+        auctionInfo.startTime = startTime;
+        auctionInfo.endTime = endTime;
+        auctionInfo.paymentTokenAddress = paymentTokenAddress;
+        auctionInfo.status = AuctionStatus.ACTIVE;
+        auctionInfo.highestBid = 0;
+        auctionInfo.highestBidder = address(0);
+        
+        // auctions[auctionId] = AuctionInfo({
+        //     nftAddress: nftAddress,                     // 待拍卖NFT的合约地址
+        //     tokenId: tokenId,                           // 待拍卖NFT的代币ID
+        //     seller: msg.sender,                         // 拍卖者地址 (卖家为函数调用者)  
+        //     startPrice: startPrice,                     // 起拍价（单位：对应支付代币最小单位）  
+        //     startTime: startTime,                       // 拍卖开始时间戳
+        //     endTime: endTime,                           // 拍卖结束时间戳   
+        //     paymentTokenAddress: paymentTokenAddress,   // 支付代币地址（address(0)表示ETH）
+        //     status: AuctionStatus.ACTIVE,               // 初始状态为"进行中"
+        //     highestBid: 0,                              // 初始最高出价为0
+        //     highestBidder: address(0),                  // 初始最高出价者为空地址
+        //     bidHistory: new Bid[](0)                    // 初始化空出价历史
+        // });
 
 
         // 拍卖计数器自增（更新总拍卖数）

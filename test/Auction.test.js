@@ -1,4 +1,4 @@
-const { expect } = require(chai);
+const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 
@@ -77,9 +77,9 @@ describe("NFT Auction Market", function () {
         // connect（seller）：使用seller账户发送交易，没有则默认为第一个账户（通常是部署者 deployer），可能不符合业务逻辑（比如 mint 权限限制、记录的发送者地址错误）。
         await nftContract.connect(seller).mint(seller.address,  `https://example.com/nft/${TOKEN_ID}`);             // 在seller账户下铸造NFT
         console.log(`NFT铸造成功，tokenID=${TOKEN_ID}`);
-        console.log(`nftContract=${nftContract}`);
-        console.log(`auctionContract=${auctionContract}`);
-        console.log(`auctionFactoryContract=${auctionFactoryContract}`);
+        console.log(`nftContract=${nftContract.address}`);
+        console.log(`auctionContract=${auctionContract.address}`);
+        console.log(`auctionFactoryContract=${auctionFactoryContract.address}`);
         console.log(`owner=${owner.address}`);
         console.log(`seller=${seller.address}`);
         console.log(`bidder1=${bidder1.address}`);
@@ -99,11 +99,13 @@ describe("NFT Auction Market", function () {
 
     describe("拍卖功能",function(){
         beforeEach(async function (){
-            // 卖家给逻辑合约授权操作自己的NFT（在结束拍卖是需要逻辑合约进行交互操作）
-            await nftContract.connect(seller).approve(auctionContract.address, TOKEN_ID);  
+            // 卖家给工厂合约授权操作自己的NFT
+            // await nftContract.connect(seller).approve(auctionFactoryContract.address, TOKEN_ID);
+            await nftContract.connect(seller).setApprovalForAll(auctionFactoryContract.address, true);
         });
 
         it("测试创建拍卖",async function () {
+
             // 卖家调用工厂合约创建拍卖
             const tx = await auctionFactoryContract.connect(seller).createAuction(
                 nftContract.address,
