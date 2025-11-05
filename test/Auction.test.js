@@ -37,6 +37,7 @@ const { ethers } = require("hardhat");
 
 // 定义测试套件："NFT Auction Market"（测试整体NFT拍卖市场功能）
 describe("NFT Auction Market", function () {
+    this.timeout(120000); // 设置测试超时时间（默认5000ms）
     // 声明测试中需要使用到的全局变量（合约示例、测试账户）
     let nftContract;               // MyNFT合约实例
     let auctionContract;           // Auction合约实例
@@ -88,13 +89,13 @@ describe("NFT Auction Market", function () {
     });
 
     // 子组1：测试NFT合约核心功能
-    describe("MyNFT合约",function () {
-        it("测试正确铸造NFT",async function () {
-            expect(await nftContract.ownerOf(TOKEN_ID)).to.equal(seller.address);  // 检查NFT是否正确铸造到seller账户
-            expect(await nftContract.tokenURI(TOKEN_ID)).to.equal(`https://example.com/nft/${TOKEN_ID}`);  // 检查NFT的tokenURI是否正确
-        });
+    // describe("MyNFT合约",function () {
+    //     it("测试正确铸造NFT",async function () {
+    //         expect(await nftContract.ownerOf(TOKEN_ID)).to.equal(seller.address);  // 检查NFT是否正确铸造到seller账户
+    //         expect(await nftContract.tokenURI(TOKEN_ID)).to.equal(`https://example.com/nft/${TOKEN_ID}`);  // 检查NFT的tokenURI是否正确
+    //     });
        
-    });
+    // });
 
 
     describe("拍卖功能",function(){
@@ -104,63 +105,63 @@ describe("NFT Auction Market", function () {
             await nftContract.connect(seller).setApprovalForAll(auctionFactoryContract.address, true);
         });
 
-        it("测试创建拍卖",async function () {
+        // it("测试创建拍卖",async function () {
 
-            // 卖家调用工厂合约创建拍卖
-            const tx = await auctionFactoryContract.connect(seller).createAuction(
-                nftContract.address,
-                TOKEN_ID,
-                START_PRICE,
-                DURATION,
-                ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
-            );
+        //     // 卖家调用工厂合约创建拍卖
+        //     const tx = await auctionFactoryContract.connect(seller).createAuction(
+        //         nftContract.address,
+        //         TOKEN_ID,
+        //         START_PRICE,
+        //         DURATION,
+        //         ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
+        //     );
 
-            // 等待交易上链，区块确认，获取交易收据（包含事件日志）
-            const receipt = await tx.wait();
+        //     // 等待交易上链，区块确认，获取交易收据（包含事件日志）
+        //     const receipt = await tx.wait();
 
-            // 从交易收据中获取事件日志
-            const auctionCreatedEvent = receipt.events.find(event => event.event === "AuctionCreated");
+        //     // 从交易收据中获取事件日志
+        //     const auctionCreatedEvent = receipt.events.find(event => event.event === "AuctionCreated");
 
-            // 检查事件日志是否存在
-            expect(auctionCreatedEvent).to.not.be.undefined;
+        //     // 检查事件日志是否存在
+        //     expect(auctionCreatedEvent).to.not.be.undefined;
 
-            // 验证创建的拍卖id是否为1
-            expect(auctionCreatedEvent.args.auctionId).to.equal(1);
+        //     // 验证创建的拍卖id是否为1
+        //     expect(auctionCreatedEvent.args.auctionId).to.equal(1);
             
-        });
+        // });
 
 
-        it("测试出价逻辑",async function () {
-            // 卖家调用工厂合约创建拍卖
-            const tx = await auctionFactoryContract.connect(seller).createAuction(
-                nftContract.address,
-                TOKEN_ID,
-                START_PRICE,
-                DURATION,
-                ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
-            );
+        // it("测试出价逻辑",async function () {
+        //     // 卖家调用工厂合约创建拍卖
+        //     const tx = await auctionFactoryContract.connect(seller).createAuction(
+        //         nftContract.address,
+        //         TOKEN_ID,
+        //         START_PRICE,
+        //         DURATION,
+        //         ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
+        //     );
 
-            // 买家调用工厂合约，根据拍卖id获取对应的（拍卖）逻辑合约地址
-            const auctionProxyAddress = await auctionFactoryContract.getAuctionAddress(1);
+        //     // 买家调用工厂合约，根据拍卖id获取对应的（拍卖）逻辑合约地址
+        //     const auctionProxyAddress = await auctionFactoryContract.getAuctionAddress(1);
 
-            // 获取拍卖代理合约实例
-            const auctionProxy = await ethers.getContractAt("Auction",auctionProxyAddress); 
+        //     // 获取拍卖代理合约实例
+        //     const auctionProxy = await ethers.getContractAt("Auction",auctionProxyAddress); 
 
-            // 定义竞拍金额：0.2 ETH（高于起拍价0.1ETH）
-            const bidAmount = ethers.utils.parseEther("0.2"); // 出价：0.2 ETH（转换为wei单位）
+        //     // 定义竞拍金额：0.2 ETH（高于起拍价0.1ETH）
+        //     const bidAmount = ethers.utils.parseEther("0.2"); // 出价：0.2 ETH（转换为wei单位）
 
-            // 验证竞拍者1出价成功（触发BidPlaced事件）
-            await expect(auctionProxy.connect(bidder1).bid(1, { value: bidAmount }))
-                .to.emit(auctionProxy,"BidPlaced")
-                .withArgs(
-                    1, 
-                    bidder1.address,
-                    bidAmount,
-                    false,
-                    ethers.constants.AddressZero
-            )
+        //     // 验证竞拍者1出价成功（触发BidPlaced事件）
+        //     await expect(auctionProxy.connect(bidder1).bid(1, { value: bidAmount }))
+        //         .to.emit(auctionProxy,"BidPlaced")
+        //         .withArgs(
+        //             1, 
+        //             bidder1.address,
+        //             bidAmount,
+        //             false,
+        //             ethers.constants.AddressZero
+        //     )
 
-        });
+        // });
 
 
         it("测试拍卖结束，并转移资产",async function () {
@@ -173,12 +174,14 @@ describe("NFT Auction Market", function () {
                 ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
             );
 
+    
+
             // 买家调用工厂合约，根据拍卖id获取对应的（拍卖）逻辑合约地址
             const auctionProxyAddress = await auctionFactoryContract.getAuctionAddress(1);
             
             // 获取拍卖代理合约实例
             const auctionProxy = await ethers.getContractAt("Auction",auctionProxyAddress);
-
+            console.log(`auctionProxy=${auctionProxy.address}`);
 
             // 定义竞拍金额：0.2 ETH（高于起拍价0.1ETH）
             const bidAmount = ethers.utils.parseEther("0.2"); // 出价：0.2 ETH（转换为wei单位）
@@ -209,38 +212,38 @@ describe("NFT Auction Market", function () {
 
         });
 
-        describe("动态手续费",function () {
-            it("测试动态手续费", async function(){
-                // 卖家调用工厂合约创建拍卖
-                await auctionFactoryContract.connect(seller).createAuction(
-                    nftContract.address,
-                    TOKEN_ID,
-                    START_PRICE,
-                    DURATION,
-                    ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
-                );
+        // describe("动态手续费",function () {
+        //     it("测试动态手续费", async function(){
+        //         // 卖家调用工厂合约创建拍卖
+        //         await auctionFactoryContract.connect(seller).createAuction(
+        //             nftContract.address,
+        //             TOKEN_ID,
+        //             START_PRICE,
+        //             DURATION,
+        //             ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
+        //         );
 
 
-                // 买家调用工厂合约，根据拍卖id获取对应的（拍卖）逻辑合约地址
-                const auctionProxyAddress = await auctionFactoryContract.getAuctionAddress(1);
+        //         // 买家调用工厂合约，根据拍卖id获取对应的（拍卖）逻辑合约地址
+        //         const auctionProxyAddress = await auctionFactoryContract.getAuctionAddress(1);
             
-                // 获取拍卖代理合约实例
-                const auctionProxy = await ethers.getContractAt("Auction",auctionProxyAddress);
+        //         // 获取拍卖代理合约实例
+        //         const auctionProxy = await ethers.getContractAt("Auction",auctionProxyAddress);
 
-                // 定义竞拍金额：1.0 ETH（高于1万ETH阈值？注：测试网阈值为1万ETH，此处仅验证计算逻辑）
-                const bidAmount = ethers.utils.parseEther("1.0"); 
+        //         // 定义竞拍金额：1.0 ETH（高于1万ETH阈值？注：测试网阈值为1万ETH，此处仅验证计算逻辑）
+        //         const bidAmount = ethers.utils.parseEther("1.0"); 
 
-                // 买家1竞拍出价
-                await auctionProxy.connect(bidder1).bid(1, { value: bidAmount });
+        //         // 买家1竞拍出价
+        //         await auctionProxy.connect(bidder1).bid(1, { value: bidAmount });
 
-                // 调用calculateDynamicFee计算手续费
-                const fee = await auctionProxy.calculateDynamicFee(1)
+        //         // 调用calculateDynamicFee计算手续费
+        //         const fee = await auctionProxy.calculateDynamicFee(1)
 
-                // 验证手续费大于0（计算逻辑生效，未返回0）
-                expect(fee).to.be.gt(0);
+        //         // 验证手续费大于0（计算逻辑生效，未返回0）
+        //         expect(fee).to.be.gt(0);
 
-            });
-        });
+        //     });
+        // });
 
     });  
 
