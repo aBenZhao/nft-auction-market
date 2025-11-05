@@ -114,6 +114,7 @@ describe("NFT Auction Market", function () {
                 START_PRICE,
                 DURATION,
                 ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
+                treasury.address
             );
 
             // 等待交易上链，区块确认，获取交易收据（包含事件日志）
@@ -139,6 +140,7 @@ describe("NFT Auction Market", function () {
                 START_PRICE,
                 DURATION,
                 ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
+                treasury.address
             );
 
             // 买家调用工厂合约，根据拍卖id获取对应的（拍卖）逻辑合约地址
@@ -172,6 +174,7 @@ describe("NFT Auction Market", function () {
                 START_PRICE,
                 DURATION,
                 ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
+                treasury.address
             );
 
     
@@ -243,6 +246,7 @@ describe("NFT Auction Market", function () {
                     START_PRICE,
                     DURATION,
                     ethers.constants.AddressZero, // 支付方式：ETH（用零地址标识）
+                    treasury.address
                 );
 
 

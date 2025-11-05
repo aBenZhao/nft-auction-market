@@ -71,7 +71,8 @@ interface IAuctionFactory {
         uint256 tokenId,
         uint256 startPrce,
         uint256 duration,
-        address acceptedPaymentTokenAddress
+        address acceptedPaymentTokenAddress,
+        address treasury
     ) external returns (uint256 auctionId);
 
     /**

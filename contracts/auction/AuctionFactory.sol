@@ -109,7 +109,8 @@ contract AuctionFactory is Ownable , IAuctionFactory {
         uint256 tokenId,
         uint256 startPrce,
         uint256 duration,
-        address acceptedPaymentTokenAddress
+        address acceptedPaymentTokenAddress,
+        address treasury
     ) external override returns (uint256 auctionId){
         // 计算拍卖ID,初始值为0，每创建一个拍卖ID加1
         auctionIdCounter++;
@@ -120,7 +121,7 @@ contract AuctionFactory is Ownable , IAuctionFactory {
             auctionImplementation,
             abi.encodeWithSignature(
                 "initialize(address,address)",
-                owner(),
+                treasury,
                 address(this)
             )
         );
