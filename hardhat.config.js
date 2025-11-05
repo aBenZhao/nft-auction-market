@@ -2,6 +2,8 @@
 require("@nomiclabs/hardhat-waffle"); // 基础工具链（测试、部署）
 require("@nomiclabs/hardhat-etherscan"); // 合约验证插件
 require("dotenv").config(); // 加载 .env 文件中的环境变量
+require("@nomiclabs/hardhat-ethers"); // 必须在 hardhat-deploy 之前引入
+require("hardhat-deploy"); // 关键：启用 deploy 任务
 
 // 导出配置对象
 module.exports = {
@@ -47,6 +49,7 @@ module.exports = {
   etherscan: {
     // Etherscan API密钥（从环境变量读取，用于验证合约）
     apiKey: process.env.ETHERSCAN_API_KEY
+    // timeout: 120000, // 延长超时时间到 60 秒
   },
 
   // 命名账户配置（hardhat-deploy插件功能，为常用账户起别名，简化部署脚本）

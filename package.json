@@ -21,7 +21,7 @@
     "chai": "^4.3.7",
     "dotenv": "^17.2.3",
     "ethereum-waffle": "^3.4.4",
-    "ethers": "^5.7.2",
+    "ethers": "^5.8.0",
     "hardhat": "^2.26.5",
     "hardhat-deploy": "^1.0.4",
     "prettier": "^3.6.2",
