@@ -77,15 +77,15 @@ describe("NFT Auction Market", function () {
         // 给买家铸造测试用NFT
         // connect（seller）：使用seller账户发送交易，没有则默认为第一个账户（通常是部署者 deployer），可能不符合业务逻辑（比如 mint 权限限制、记录的发送者地址错误）。
         await nftContract.connect(seller).mint(seller.address,  `https://example.com/nft/${TOKEN_ID}`);             // 在seller账户下铸造NFT
-        console.log(`NFT铸造成功，tokenID=${TOKEN_ID}`);
-        console.log(`nftContract=${nftContract.address}`);
-        console.log(`auctionContract=${auctionContract.address}`);
-        console.log(`auctionFactoryContract=${auctionFactoryContract.address}`);
-        console.log(`owner=${owner.address}`);
-        console.log(`seller=${seller.address}`);
-        console.log(`bidder1=${bidder1.address}`);
-        console.log(`bidder2=${bidder2.address}`);
-        console.log(`treasury=${treasury.address}`);
+        // console.log(`NFT铸造成功，tokenID=${TOKEN_ID}`);
+        // console.log(`nftContract=${nftContract.address}`);
+        // console.log(`auctionContract=${auctionContract.address}`);
+        // console.log(`auctionFactoryContract=${auctionFactoryContract.address}`);
+        // console.log(`owner=${owner.address}`);
+        // console.log(`seller=${seller.address}`);
+        // console.log(`bidder1=${bidder1.address}`);
+        // console.log(`bidder2=${bidder2.address}`);
+        // console.log(`treasury=${treasury.address}`);
     });
 
     // 子组1：测试NFT合约核心功能
@@ -184,7 +184,7 @@ describe("NFT Auction Market", function () {
             
             // 获取拍卖代理合约实例
             const auctionProxy = await ethers.getContractAt("Auction",auctionProxyAddress);
-            console.log(`auctionProxy=${auctionProxy.address}`);
+            // console.log(`auctionProxy=${auctionProxy.address}`);
 
 
             // // 正确的 ERC1967 实现插槽（32字节，66个字符）
@@ -217,7 +217,7 @@ describe("NFT Auction Market", function () {
             // 强制挖矿，使事件快进生效
             await ethers.provider.send("evm_mine");
 
-            console.log("准备结束拍卖：");
+            // console.log("准备结束拍卖：");
 
             // 验证卖家结束拍卖成功（触发AuctionEnded事件）
             // 有交易的，await要在外面，等待交易完毕后再断言
