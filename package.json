@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test",
+    "test": "NODE_ENV=test hardhat test",
     "deploy:localhost": "hardhat deploy --network localhost",
     "deploy:sepolia": "hardhat deploy --network sepolia",
     "verify:sepolia": "hardhat etherscan-verify --network sepolia"

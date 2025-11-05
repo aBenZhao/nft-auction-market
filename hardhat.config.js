@@ -29,6 +29,17 @@ module.exports = {
       url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`, // Infura 节点 URL
       accounts: [process.env.PRIVATE_KEY], // 部署合约的账户私钥（从 .env 读取）
       chainId: 11155111 // Sepolia测试网唯一链ID（用于Hardhat识别网络）
+    },
+
+    // 本地开发环境（forking模式，连接到 Sepolia 测试网）
+    // 如若本地环境需要用到预言机等真实测试环境的数据，就需要配置forking模式连接到真实网络
+    // 开启forking，本地就会去测试网根据blockNumber配置复制完整的数据到本地，供本地调用获取数据
+    hardhat: {
+      forking: {
+        url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
+        enabled: process.env.NODE_ENV === "test" // 只在测试时启用
+        // 不设置 blockNumber，使用最新状态
+      }
     }
   },
 
