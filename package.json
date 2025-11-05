@@ -6,14 +6,29 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "NODE_ENV=test hardhat test",
+    "test:coverage": "NODE_ENV=test nyc hardhat test",
     "deploy:localhost": "hardhat deploy --network localhost",
     "deploy:sepolia": "hardhat deploy --network sepolia",
     "verify:sepolia": "hardhat etherscan-verify --network sepolia"
+  },
+  "nyc": {
+    "extends": "@istanbuljs/nyc-config-typescript",
+    "include": [
+      "test/**/*.test.js"
+    ],
+    "exclude": [
+      "node_modules/**"
+    ],
+    "reporter": [
+      "text",
+      "html"
+    ]
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.8",
     "@nomiclabs/hardhat-waffle": "^2.0.6",
@@ -24,6 +39,7 @@
     "ethers": "^5.8.0",
     "hardhat": "^2.26.5",
     "hardhat-deploy": "^1.0.4",
+    "nyc": "^17.1.0",
     "prettier": "^3.6.2",
     "prettier-plugin-solidity": "^2.1.0"
   },
