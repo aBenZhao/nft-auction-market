@@ -206,4 +206,8 @@ contract AuctionFactory is Ownable , IAuctionFactory {
     }
 
 
+    receive() external payable {
+        
+    }
+
 }

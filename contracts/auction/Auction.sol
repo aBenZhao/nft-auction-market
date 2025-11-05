@@ -98,8 +98,10 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
     address public auctionFactory;
 
 
+
+
     // 缓存代币预言机映射
-    mapping(address => address) public tokenPriceFeeds;
+    // mapping(address => address) public tokenPriceFeeds;
 // ================================================== 可升级逻辑函数的initialize函数 ===================================================
     /**
      * @notice 可升级合约的初始化函数（替代构造函数，仅执行一次）
@@ -324,7 +326,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param auctionId 拍卖ID； 
      * @return 以美元计价的当前最高出价金额；
      */
-    function getCurrentBidInUSD(uint256 auctionId) external override returns (uint256){
+    function getCurrentBidInUSD(uint256 auctionId) external view override returns (uint256){
         AuctionInfo storage auction = auctions[auctionId];
         // 无最高出价时，美元价值为0
         if (auction.highestBid == 0) return 0;
@@ -425,7 +427,7 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param auctionId 目标拍卖的唯一ID
      * @return 最终手续费金额（单位：对应支付代币最小单位）
      */
-    function calculateDynamicFee(uint256 auctionId) public returns (uint256){
+    function calculateDynamicFee(uint256 auctionId) public view returns (uint256){
         AuctionInfo storage auction = auctions[auctionId];
 
         // 无最高出价者（流拍），手续费为0
@@ -468,19 +470,19 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
      * @param token 目标代币地址（address(0)代表ETH）
      * @return 预言机地址（若工厂也无配置则revert）
      */
-    function _getTokenFeed(address token) internal returns (address) {
-        address feed = tokenPriceFeeds[token];
-        // 本地缓存存在，直接返回
-        if (feed != address(0)) {
-            return feed;
-        }
+    function _getTokenFeed(address token) internal view returns (address) {
+        // address feed = tokenPriceFeeds[token];
+        // // 本地缓存存在，直接返回
+        // if (feed != address(0)) {
+        //     return feed;
+        // }
 
         // 本地缓存缺失，从工厂查询并更新缓存
-        feed = IAuctionFactory(auctionFactory).getTokenFeed(token);
+        address feed = IAuctionFactory(auctionFactory).getTokenFeed(token);
         require(feed != address(0), "Factory has no feed for token");
         
         // 更新本地缓存，供下次使用
-        tokenPriceFeeds[token] = feed;
+        // tokenPriceFeeds[token] = feed;
         return feed;
     }
 
@@ -493,4 +495,6 @@ contract Auction is Initializable, UUPSUpgradeable , OwnableUpgradeable , Reentr
         // 此处可以无需实现，通过onlyOwner来限制权限
         // 仅合约所有者（管理员）有权限升级合约实现逻辑
     }
+
+
 }
