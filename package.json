@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "compile": "hardhat compile",
-    "test": "NODE_ENV=test hardhat test",
-    "test:coverage": "NODE_ENV=test nyc hardhat test",
+    "test": "hardhat test",
+    "test:coverage": "nyc hardhat test",
+    "coverage": "hardhat coverage",
     "deploy:localhost": "hardhat deploy --network localhost",
     "deploy:sepolia": "hardhat deploy --network sepolia",
     "verify:sepolia": "hardhat etherscan-verify --network sepolia"
@@ -41,7 +42,8 @@
     "hardhat-deploy": "^1.0.4",
     "nyc": "^17.1.0",
     "prettier": "^3.6.2",
-    "prettier-plugin-solidity": "^2.1.0"
+    "prettier-plugin-solidity": "^2.1.0",
+    "solidity-coverage": "^0.8.16"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.8.0",

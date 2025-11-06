@@ -133,7 +133,7 @@ npm install @openzeppelin/contracts
 # 8.安装两个用于区块链测试的关键工具，专门解决 Hardhat 测试中 “断言逻辑” 的问题，让你能更方便地验证合约行为是否符合预期。
 npm install --save-dev chai @nomicfoundation/hardhat-chai-matchers
 
-# 用 nyc（Istanbul）直接跑覆盖测试（最通用）
+# 9.用 nyc（Istanbul）直接跑覆盖测试（最通用）
 npm install --save-dev nyc @istanbuljs/nyc-config-typescript
 # 在 package.json 中添加脚本
 {
@@ -148,6 +148,40 @@ npm install --save-dev nyc @istanbuljs/nyc-config-typescript
     "reporter": ["text", "html"] // 输出格式：终端文本 + HTML 报告
   }
 }
+
+# 10.solidity-coverage精准统计 .sol 覆盖率的工具
+npm install --save-dev solidity-coverage
+# 修正 hardhat.config.js 配置（关键解决分叉问题）
+require("solidity-coverage");
+require("dotenv").config();
+
+module.exports = {
+  solidity: "0.8.20", // 与你的合约版本一致
+  networks: {
+    hardhat: {
+      forking: {
+        url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`, // 主网 RPC
+        enabled: true, // 强制启用分叉
+        blockNumber: 19000000, // 固定区块号（确保稳定）
+      },
+    },
+  },
+  // 强制覆盖率测试使用 hardhat 网络（带分叉）
+  coverageNetwork: "hardhat",
+  // 延长超时时间（避免分叉操作超时）
+  mocha: {
+    timeout: 600000, // 10分钟
+  },
+};
+# 在 package.json 中添加脚本
+{
+  "scripts": {
+    "test": "hardhat test",
+    "coverage": "hardhat coverage" // 专门用于 Solidity 覆盖率测试
+  }
+}
+
+
 
 ```
 
@@ -181,6 +215,9 @@ npm run test
 # 覆盖率测试
 npm run test:coverage
 
+# 覆盖率：sol文件的覆盖率
+npm run coverage
+
 # 部署到测试网
 npm run deploy:sepolia
 ```
@@ -190,7 +227,7 @@ npm run deploy:sepolia
 ### 测试覆盖率
 
 **
-
+一、JS测试文件的覆盖率测试：
 ![测试覆盖率](./image/覆盖率测试结果.png)
 
 - 整体覆盖率：100%
@@ -198,6 +235,9 @@ npm run deploy:sepolia
 - 分支覆盖率：100%
 
 - 语句覆盖率：100%
+
+二、Solidity测试文件的覆盖率测试：
+![测试覆盖率](./image/sol文件覆盖率测试结果.png)
 
 ### 测试结果
 

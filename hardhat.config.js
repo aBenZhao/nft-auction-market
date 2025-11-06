@@ -1,9 +1,12 @@
 // 导入所需插件
 require("@nomiclabs/hardhat-waffle"); // 基础工具链（测试、部署）
 require("@nomiclabs/hardhat-etherscan"); // 合约验证插件
+require("solidity-coverage"); // 必须添加这行，启用 coverage 任务
 require("dotenv").config(); // 加载 .env 文件中的环境变量
 require("@nomiclabs/hardhat-ethers"); // 必须在 hardhat-deploy 之前引入
 require("hardhat-deploy"); // 关键：启用 deploy 任务
+
+
 
 // 导出配置对象
 module.exports = {
@@ -39,10 +42,17 @@ module.exports = {
     hardhat: {
       forking: {
         url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
-        enabled: process.env.NODE_ENV === "test" // 只在测试时启用
+        // enabled: process.env.NODE_ENV === "test" // 只在测试时启用 ,    "test": "NODE_ENV=test hardhat test", // package.json中配置
+        enabled: true, // 本地开发环境下默认开启forking模式
         // 不设置 blockNumber，使用最新状态
       }
     }
+  },
+  // 强制覆盖率测试使用 hardhat 网络（带分叉）
+  coverageNetwork: "hardhat",
+  // 延长超时时间（避免分叉操作超时）
+  mocha: {
+    timeout: 600000, // 10分钟
   },
 
   // Etherscan 配置（用于合约验证，需 Etherscan API Key）
